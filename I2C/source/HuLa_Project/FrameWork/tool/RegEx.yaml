@@ -1,0 +1,24 @@
+# @M4_START_REMOVAL@
+# Code here
+# @M4_END_REMOVAL@
+REMOVAL_AREA : '(@M4_START_REMOVAL@.*?@M4_END_REMOVAL@)'
+
+# @IF (@M4_SUPPORT_MULTI_INSTANCE@==1)
+# Code here
+# @ENDIF
+CONDITION_AREA : '(\s*@IF\s+\((.*?)\).+?@ENDIF)'
+START_CONDITION : '\s+@IF\s+\(.*\)'
+END_CONDITION : '\s+@ENDIF'
+
+# <ecuresource
+#  target=""
+#  file="">
+#  <src =""/>
+# </ecuresource>
+RESOURCE_PACKAGE : '(<ecuresource.*</ecuresource>)'
+
+# INSTANCE_1_THONV = true
+# INSTANCE_2_THONV = true
+INSTANCE_THONV : 'INSTANCE_(\d+)_THONV'
+
+

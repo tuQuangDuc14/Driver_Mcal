@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<HuLa_Project>
+    <Coverity>
+        <Enable_Coverity>ENABLE_COVERITY</Enable_Coverity> 
+        <Coverity_Opts>
+            <Converity_Opt>COV_BUILD</Converity_Opt>
+            <Converity_Opt>--dir</Converity_Opt>
+            <Converity_Opt>COVERITY_OUTPUT</Converity_Opt>
+            <Converity_Opt>-c</Converity_Opt>
+            <!-- Output of Step Configure in Coverity -->
+            <Converity_Opt>COVERITY_XML</Converity_Opt>
+        </Coverity_Opts>
+    </Coverity>
+</HuLa_Project>

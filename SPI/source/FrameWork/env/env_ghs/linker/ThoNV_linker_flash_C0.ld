@@ -1,0 +1,134 @@
+/*
+* FLASH(rx):ORIGIN =0x08000000,LENGTH =1024K
+* SRAM(rwx):ORIGIN =0x20000000,LENGTH =128K
+* ITCM (rx):ORIGIN = 0x00000000, LENGTH = 64K   Instruction Tightly-Coupled Memory (Luu lenh vao day giup truy cap nhanh hon)
+* DTCM (rwx):ORIGIN = 0x10000000, LENGTH = 128K Data Tightly-Coupled Memory (Luu data vao day giup truy cap nhanh hon)
+*/
+
+MEMORY
+{
+    int_itcm                   : ORIGIN = 0x00000000, LENGTH = 64K     /* 64K */
+    int_dtcm                   : ORIGIN = 0x10000000, LENGTH = 128K    /* 128K */
+
+    int_flash_c0               : ORIGIN = 0x08000000, LENGTH = 0x000F9F00    /* 1024K - 0.1K */
+    int_flash_fls_rsv_c0       : ORIGIN = 0x080F9F00, LENGTH = 0x00000100    /* 0.1K */
+
+    int_sram_c0                : ORIGIN = 0x20000000, LENGTH = 0x00013880    /* 80K */
+    int_sram_fls_rsv_c0        : ORIGIN = 0x20013880, LENGTH = 0x00000100    /* 0.1K */
+	int_sram_stack_c0          : ORIGIN = 0x20013980, LENGTH = 0x00006C60    /* 27744  */
+    int_sram_no_cacheable_c0   : ORIGIN = 0x2001A5E0, LENGTH = 0x00002710    /* 10KB */
+    int_sram_shareable         : ORIGIN = 0x2001CCF0, LENGTH = 0x00002710    /* 10KB */
+    ram_end_c0                 : ORIGIN = 0x2001F400, LENGTH = 0x00000000
+
+    int_sram_stack_c1          : ORIGIN = 0x30000000, LENGTH = 0x00001000    /* 4KB */
+    init_system_SC             : ORIGIN = 0xE000ED00, LENGTH = 0x00000100    /* SC module */
+}
+
+SECTIONS
+{
+  	.intc_vector                                 ALIGN(4)     : > int_flash_c0
+    .startup                                     ALIGN(4)     : > .
+    .systeminit                                  ALIGN(4)     : > .
+    .text.startup                                ALIGN(4)     : > .
+    .text                                        ALIGN(4)     : > .
+    .mcal_text                                   ALIGN(4)     : > .
+    .acmcu_code_rom                              ALIGN(4)     : > .
+
+    .rodata                                      ALIGN(4)     : > .
+    .mcal_const_cfg                              ALIGN(4)     : > .
+    .mcal_const                                  ALIGN(4)     : > .
+    .init_table                                  ALIGN(4)     : > .
+    .zero_table                                  ALIGN(4)     : > .
+
+    .ROM.data                     ROM(.data)                    ALIGN(4)      : > .
+    .ROM.mcal_data                ROM(.mcal_data)               ALIGN(4)      : > .
+    .ROM.ramcode                  ROM(.ramcode)                 ALIGN(4)      : > .
+    .ROM.mcal_data_no_cacheable   ROM(.mcal_data_no_cacheable)  ALIGN(4)      : > .
+    .ROM.mcal_const_no_cacheable  ROM(.mcal_const_no_cacheable) ALIGN(4)      : > .
+    .ROM.mcal_shared_data         ROM(.mcal_shared_data)        ALIGN(4)      : > .
+    
+    .acfls_code_rom                              ALIGN(4)     : > int_flash_fls_rsv_c0
+    .data                                        ALIGN(4)     : > int_sram_c0
+    .mcal_data                                   ALIGN(4)     : > .
+    .ramcode                                 ABS ALIGN(4)     : > .
+    .bss                                (NOLOAD) ALIGN(16)    : > .
+    .mcal_bss                           (NOLOAD) ALIGN(16)    : > .
+    .acfls_code_ram                              ALIGN(4)     : > .
+    .intc_vector_ram                             ALIGN(4096)  PAD(SIZEOF(.intc_vector)) : > int_sram_no_cacheable_c0
+    .mcal_data_no_cacheable                      ALIGN(4)     : > .
+    .mcal_const_no_cacheable                     ALIGN(4)     : > .
+    .mcal_bss_no_cacheable              (NOLOAD) ALIGN(16)    : > .
+    .mcal_shared_data                            ALIGN(4)     : > int_sram_shareable
+    .mcal_shared_bss                    (NOLOAD) ALIGN(16)    : > .
+
+    .system_sc :
+    {
+        KEEP(*(.system_sc))
+    } > init_system_SC
+
+    Stack_end_c0                = ADDR(int_sram_stack_c0);
+    Stack_start_c0              = ADDR(int_sram_stack_c0) + SIZEOF(int_sram_stack_c0);
+    Stack_end_c1                = ADDR(int_sram_stack_c1);
+    Stack_start_c1              = ADDR(int_sram_stack_c1) + SIZEOF(int_sram_stack_c1);
+
+    INT_SRAM_START              = ADDR(int_sram_c0);
+    INT_SRAM_END                = ADDR(ram_end_c0);
+
+    INT_ITCM_START              = ADDR(int_itcm);
+    INT_ITCM_END                = ADDR(int_itcm) + SIZEOF(int_itcm);
+                                
+    INT_DTCM_START              = ADDR(int_dtcm);
+    INT_DTCM_END                = ADDR(int_dtcm) + SIZEOF(int_dtcm);
+
+    VECTORTABLE_START           = ADDR(.intc_vector_ram);
+    INIT_VECTORTABLE_START      = ADDR(.intc_vector);
+    INIT_VECTORTABLE_END        = ADDR(.intc_vector) + SIZEOF(.intc_vector);
+    DATA_START                  = ADDR(.data);
+    INIT_DATA_START             = ADDR(.ROM.data);
+    INIT_DATA_END               = ADDR(.ROM.ramcode) + SIZEOF(.ROM.ramcode);
+    DATA_NOCACHE_START          = ADDR(.mcal_data_no_cacheable);
+    INIT_DATA_NOCACHE_START     = ADDR(.ROM.mcal_data_no_cacheable);
+    INIT_DATA_NOCACHE_END       = ADDR(.ROM.mcal_const_no_cacheable) + SIZEOF(.ROM.mcal_const_no_cacheable);
+    DATA_SHAREABLE_START        = ADDR(.mcal_shared_data);
+    INIT_DATA_SHAREABLE_START   = ADDR(.ROM.mcal_shared_data);
+    INIT_DATA_SHAREABLE_END     = ADDR(.ROM.mcal_shared_data) + SIZEOF(.ROM.mcal_shared_data);
+    ROM_CODE_START              = ADDR(int_flash_c0);
+    RAM_STACK_START             = ADDR(int_sram_stack_c0);
+    RAM_NO_CACHEABLE_START      = ADDR(int_sram_no_cacheable_c0);
+    RAM_SHAREABLE_START         = ADDR(int_sram_shareable);
+
+    BSS_START                   = ADDR(.bss);
+    BSS_END                     = ADDR(.mcal_bss) + SIZEOF(.mcal_bss);
+    BSS_NOCACHE_START           = ADDR(.mcal_bss_no_cacheable);
+    BSS_NOCACHE_END             = ADDR(.mcal_bss_no_cacheable) + SIZEOF(.mcal_bss_no_cacheable);
+    BSS_SHAREABLE_START         = ADDR(.mcal_shared_bss);
+    BSS_SHAREABLE_END           = ADDR(.mcal_shared_bss) + SIZEOF(.mcal_shared_bss);
+
+    INIT_TABLE                  = ADDR(.init_table);
+    INIT_TABLE_END              = ADDR(.init_table) + SIZEOF(.init_table);
+    ZERO_TABLE                  = ADDR(.zero_table);
+    ZERO_TABLE_END              = ADDR(.zero_table) + SIZEOF(.zero_table);
+
+    /* Fls module access code support */    
+    Fls_ACEraseRomStart         = ADDR(.acfls_code_rom);
+    Fls_ACEraseRomEnd           = ADDR(.acfls_code_rom) + SIZEOF(.acfls_code_rom);
+    Fls_ACEraseSize             = (SIZEOF(.acfls_code_rom)+3) / 4;
+
+    Fls_ACWriteRomStart         = ADDR(.acfls_code_rom);
+    Fls_ACWriteRomEnd           = ADDR(.acfls_code_rom) + SIZEOF(.acfls_code_rom);
+    Fls_ACWriteSize             = (SIZEOF(.acfls_code_rom)+3) / 4;
+    
+    Fls_ACBlankReadRomStart     = ADDR(.acfls_code_rom);
+    Fls_ACBlankReadRomEnd       = ADDR(.acfls_code_rom) + SIZEOF(.acfls_code_rom);
+    Fls_ACBlankReadSize         = (SIZEOF(.acfls_code_rom)+3) / 4;
+    
+    ERASE_FUNC_ADDRESS          = ADDR(.acfls_code_ram);
+    WRITE_FUNC_ADDRESS          = ADDR(.acfls_code_ram);
+    BLANK_READ_FUNC_ADDRESS     = ADDR(.acfls_code_ram);
+                                
+    RAM_INIT                    = 1;
+    ITCM_INIT                   = 1;
+    DTCM_INIT                   = 1;
+    CORE_ID                     = 0;
+    CLEAN_REGISTER              = 0;
+}

@@ -1,0 +1,91 @@
+define symbol region_ITCM_start                 = 0x00000000;
+define symbol region_ITCM_end                   = 64K;    
+
+define symbol region_DTCM_start                 = 0x10000000;
+define symbol region_DTCM_end                   = 128K;    
+
+define symbol region_SRAM_C0_start              = 0x20000000;
+define symbol region_SRAM_C0_end                = 0x20013980; 
+
+define symbol region_SRAM_STACK_C0_start        = 0x20013980;
+define symbol region_SRAM_STACK_C0_end          = 0x2001A5E0; 
+
+define symbol region_SRAM_NO_CACHEABLE_C0_start = 0x2001A5E0;
+define symbol region_SRAM_NO_CACHEABLE_C0_end   = 0x2001CCF0;
+
+define symbol region_SRAM_SHAREABLE_start       = 0x2001CCF0;
+define symbol region_SRAM_SHAREABLE_end         = 0x2001F400; 
+
+define symbol region_SRAM_END_C0                = 0x2001F400;
+
+define exported symbol Stack_end_c0      = region_SRAM_STACK_C0_start;
+define exported symbol Stack_start_c0    = region_SRAM_STACK_C0_end;
+
+
+define exported symbol RAM_INIT          = 0;
+define exported symbol INT_SRAM_START    = region_SRAM_C0_start;
+define exported symbol INT_SRAM_END      = region_SRAM_END_C0;
+
+define exported symbol ITCM_INIT         = 1;
+define exported symbol INT_ITCM_START    = region_ITCM_start;
+define exported symbol INT_ITCM_END      = region_ITCM_end;
+
+define exported symbol DTCM_INIT         = 1;
+define exported symbol INT_DTCM_START    = region_DTCM_start;
+define exported symbol INT_DTCM_END      = region_DTCM_end;
+
+define memory mem with size = 4G;
+define region RAM_region            = mem:[from region_SRAM_C0_start to region_SRAM_C0_end];
+define region RAM_NO_CACHE_region   = mem:[from region_SRAM_NO_CACHEABLE_C0_start to region_SRAM_NO_CACHEABLE_C0_end];
+define region RAM_SHARE_region      = mem:[from region_SRAM_SHAREABLE_start to region_SRAM_SHAREABLE_end];
+define region ITCM_region           = mem:[from region_ITCM_start to region_ITCM_end];
+define region DTCM_region           = mem:[from region_DTCM_start to region_DTCM_end];
+
+define exported symbol VTABLE_INIT = start(RAM_NO_CACHE_region);
+
+do not initialize {
+                    section .data,
+                    section .mcal_data,
+                    section .mcal_data_no_cacheable,
+                    section .mcal_shared_data,
+                    section .bss,
+                    section .mcal_bss,
+                    section .mcal_bss_no_cacheable,
+                    section .mcal_const_no_cacheable,
+                    section .mcal_shared_bss
+                  };
+
+/* push flash region to ram */
+define block Initialization_System with fixed order                  { section .startup, section .systeminit };
+define block Data_Code with fixed order                              { section .text, section .mcal_text };
+define block Data_ReadOnly with fixed order                          { section .rodata, section .mcal_const_cfg, section .mcal_const };
+define block Data_InitDataBss with fixed order                       { section .init_table, section .zero_table, section .iar.* };
+define block Rom_Initvectortable with fixed order, alignment = 4096  { };
+define block Rom_Initdata with fixed order                           { };
+define block Rom_Initdata_Nocache with fixed order                   { };
+define block Rom_Initdata_Sharable with fixed order                  { };
+
+/* ram region */
+define block Ram_Vectortable with fixed order, alignment = 4096     { section .intvec };
+define block Ram_Data with fixed order, alignment = 4               { section .data, section .mcal_data, section .ramcode, section .acfls_code_rom, section .acmcu_code_rom };
+define block Ram_Data_Nocache with fixed order, alignment = 4       { section .mcal_data_no_cacheable, section .mcal_const_no_cacheable };
+define block Ram_Data_Sharable with fixed order, alignment = 4      { section .mcal_shared_data };
+define block Ram_Bss with fixed order, alignment = 4                { section .bss, section .mcal_bss };
+define block Ram_Bss_Nocache with fixed order, alignment = 4        { section .mcal_bss_no_cacheable };
+define block Ram_Bss_Sharable with fixed order, alignment = 4       { section .mcal_shared_bss };
+
+place in RAM_region          { block Initialization_System, block Data_Code, block Data_ReadOnly, block Data_InitDataBss};
+place in RAM_region          { block Ram_Data, block Ram_Bss };
+place in RAM_region          { block Rom_Initdata };
+place in RAM_NO_CACHE_region { block Ram_Vectortable };
+place in RAM_NO_CACHE_region { block Rom_Initvectortable };
+place in RAM_NO_CACHE_region { block Ram_Data_Nocache, block Ram_Bss_Nocache };
+place in RAM_NO_CACHE_region { block Rom_Initdata_Nocache };
+place in RAM_SHARE_region    { block Ram_Data_Sharable, block Ram_Bss_Sharable };
+place in RAM_SHARE_region    { block Rom_Initdata_Sharable };
+
+define exported symbol ROM_CODE_START          = 0x08000000;
+define exported symbol RAM_SHAREABLE_START     = region_SRAM_SHAREABLE_start;
+define exported symbol RAM_STACK_START         = region_SRAM_STACK_C0_start;
+define exported symbol RAM_NO_CACHEABLE_START  = region_SRAM_NO_CACHEABLE_C0_start;
+define exported symbol CORE_ID = 0;
